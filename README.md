@@ -392,3 +392,39 @@ sequenceDiagram
 5.  **Анализ результатов**:
     *   Формирование отчета о проведении DR-сценария.
     *   Актуализация инструкций по восстановлению (при выявлении отклонений).
+
+### 8.3. Диаграмма DR-сценария
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant PO as Владелец процесса / PO
+    participant Sup as Служба сопровождения
+    participant DBA as Администратор БД / IT
+    participant PROD as PROD (Основной)
+    participant DR as DR (Резервный)
+    participant User as Ключевые пользователи
+
+    Note over PO, User: Подготовительный этап
+    Sup->>DBA: Проверка статуса репликации
+    DBA-->>Sup: Репликация OK
+    PO->>Sup: Утверждение технологического окна
+
+    Note over PROD, DR: Переключение на DR
+    Sup->>PROD: Остановка сервисов и приема платежей
+    DBA->>DR: Активация режима Read-Write
+    DBA->>DR: Перенаправление трафика (DNS/Балансировщик)
+
+    Note over DR, User: Верификация на DR
+    Sup->>DR: Проверка доступности АБС
+    User->>DR: Проведение контрольных операций
+    User-->>PO: Подтверждение работоспособности процессов
+
+    Note over PROD, DR: Возврат на PROD (Failback)
+    DBA->>PROD: Синхронизация данных с DR на PROD
+    DBA->>PROD: Переключение трафика на PROD
+    Sup->>PROD: Запуск сервисов в штатном режиме
+
+    Note over PO, Sup: Анализ результатов
+    Sup->>PO: Отчет о проведении и достигнутых RTO/RPO
+```
